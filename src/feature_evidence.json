@@ -1,0 +1,96 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-free-form-tags-section-to-the-step-based-blueprint-studio-publish-flow-so-a-creator-can-enter-multiple-tags-stored-as-an-array-of-strings-remove-tags-and-see-the-current-tag-list-before-publishing-do-not-add-categories",
+      "featureTitle": "Add a free-form tags section to the Step-Based Blueprint Studio publish flow so a creator can enter multiple tags (stored as an array of strings), remove tags, and see the current tag list before publishing. Do not add categories.",
+      "files": [
+        "frontend/src/components/StepBasedBlueprintBuilder.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-21"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-frontend-shared-types-and-demo-marketplace-blueprints-to-include-tags-by-adding-tags-string-to-the-marketplaceblueprint-interface-in-frontend-src-types-index-ts-and-updating-frontend-src-lib-demodata-ts-demoblueprints-to-include-tags-default-to-where-appropriate",
+      "featureTitle": "Update frontend shared types and demo marketplace blueprints to include tags by adding `tags: string[]` to the `MarketplaceBlueprint` interface in `frontend/src/types/index.ts` and updating `frontend/src/lib/demoData.ts` demoBlueprints to include `tags` (default to `[]` where appropriate).",
+      "files": [
+        "frontend/src/lib/demoData.ts",
+        "frontend/src/types/index.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-23"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-publishing-from-the-step-based-blueprint-studio-creates-updates-a-marketplace-blueprint-record-that-includes-tags-so-marketplace-search-can-use-the-tags-creators-entered-use-the-existing-backend-method-createmarketplaceblueprint-in-addition-to-the-existing-project-blueprint-creation-and-include-tags-in-the-created-marketplace-blueprint",
+      "featureTitle": "Ensure publishing from the Step-Based Blueprint Studio creates/updates a marketplace blueprint record that includes tags, so marketplace search can use the tags creators entered. Use the existing backend method `createMarketplaceBlueprint` in addition to the existing project-blueprint creation, and include tags in the created marketplace blueprint.",
+      "files": [
+        "frontend/src/components/StepBasedBlueprintBuilder.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-24"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enhance-marketplace-search-to-match-tags-by-updating-the-filtering-logic-in-frontend-src-pages-marketplacepage-tsx-so-the-search-query-matches-against-blueprint-tags-in-addition-to-the-existing-checks-case-insensitive-also-display-blueprint-tags-on-marketplace-cards-as-small-readable-badges-chips-when-present",
+      "featureTitle": "Enhance marketplace search to match tags by updating the filtering logic in `frontend/src/pages/MarketplacePage.tsx` so the search query matches against `blueprint.tags` in addition to the existing checks (case-insensitive). Also display blueprint tags on marketplace cards as small readable badges/chips when present.",
+      "files": [
+        "frontend/src/pages/MarketplacePage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-25"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

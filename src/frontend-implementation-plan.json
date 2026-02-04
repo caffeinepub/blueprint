@@ -1,0 +1,83 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Free-form tags in Studio publish flow and Marketplace search",
+  "requirements": [
+    {
+      "id": "REQ-21",
+      "summary": "Add a free-form Tags input to the Step-Based Blueprint Studio publish step with add/remove and a visible tag list (no categories).",
+      "acceptanceCriteria": [
+        "In the publish step of the step-based builder, there is a clearly labeled \"Tags\" input that supports adding multiple tags and removing existing tags",
+        "Tags are treated as free-form text (no predefined category list and no category UI)",
+        "Publishing includes the tags entered by the creator in the publish submission payload"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/StepBasedBlueprintBuilder.tsx",
+          "operation": "modify",
+          "description": "Add publish-step state for tags (string[]), plus a free-form tag input that lets creators add multiple tags, remove tags, and see the current tag list before publishing. Use existing shadcn-ui components (e.g., Input/Button/Label) for the UI; verify the component's usage instructions before implementing. Ensure no category UI is introduced."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Extend the step-based publish mutation input to accept tags (string[]) and include them in the publish submission payload passed from the builder. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-23",
+      "summary": "Update shared MarketplaceBlueprint types and demo marketplace blueprints to include tags.",
+      "acceptanceCriteria": [
+        "TypeScript `MarketplaceBlueprint` includes `tags: string[]`",
+        "All entries in `demoBlueprints` provide a `tags` array (can be empty)"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/types/index.ts",
+          "operation": "modify",
+          "description": "Add `tags: string[]` to the `MarketplaceBlueprint` interface so marketplace data and UI can rely on tags being present."
+        },
+        {
+          "path": "frontend/src/lib/demoData.ts",
+          "operation": "modify",
+          "description": "Update all `demoBlueprints` entries to include a `tags` array, defaulting to `[]` where appropriate, to keep demo mode compiling and representative."
+        }
+      ]
+    },
+    {
+      "id": "REQ-24",
+      "summary": "Ensure Studio publishing also creates a marketplace blueprint record via the existing backend method createMarketplaceBlueprint, including tags, so marketplace search can use them.",
+      "acceptanceCriteria": [
+        "After publishing a blueprint in Studio, a corresponding marketplace blueprint exists in the backend with the submitted tags",
+        "Marketplace blueprints returned by `useGetMarketplaceBlueprints` include the tags created in Studio"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update `useCreateStepBasedBlueprint` to call the backend capability `createMarketplaceBlueprint` in addition to the existing project-blueprint creation, passing through tags and other publish fields. Invalidate/refetch marketplace blueprint queries after success so `useGetMarketplaceBlueprints` reflects newly published blueprints. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/StepBasedBlueprintBuilder.tsx",
+          "operation": "modify",
+          "description": "Wire the publish-step tags state into the existing publish action so the create mutation receives the creator-entered tags and triggers marketplace creation alongside project-blueprint creation. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-25",
+      "summary": "Enhance Marketplace search to match tags and render tags as readable chips on blueprint cards.",
+      "acceptanceCriteria": [
+        "Typing a tag term into the Marketplace search returns blueprints whose tags include the term (case-insensitive)",
+        "Marketplace cards render tags when `tags.length > 0`"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/MarketplacePage.tsx",
+          "operation": "modify",
+          "description": "Update marketplace filtering so the search query matches against `blueprint.tags` in addition to existing checks (case-insensitive). Render blueprint tags on cards as small, readable badges/chips when `tags.length > 0`, using existing shadcn-ui primitives and/or Tailwind utility classes (do not modify files under frontend/src/components/ui). Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

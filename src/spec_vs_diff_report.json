@@ -1,0 +1,72 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-04T02:59:51.490Z",
+  "summary": "Diff adds a `tags` field to the backend `MarketplaceBlueprint` type and introduces a migration that backfills missing tags to `[]`. Frontend types now include `tags: string[]`, Marketplace search filtering includes tag matching, and the step-based builder shows new tag-related state/UI imports. However, due to truncation, key end-to-end wiring (publish payload, backend create/get methods, demoBlueprints tags, and marketplace card tag badges) is not fully evidenced in the provided diff summary.",
+  "missing_requirements": [
+    {
+      "id": "REQ-21",
+      "requirement": "Publishing includes the tags entered by the creator in the publish submission payload (step-based studio publish flow).",
+      "reason": "StepBasedBlueprintBuilder.tsx shows new tags state and tag-related UI imports, but the truncated diff does not show the publish submission handler/payload including `tags`, nor the add/remove tag UI behavior.",
+      "evidence": [
+        "frontend/src/components/StepBasedBlueprintBuilder.tsx"
+      ]
+    },
+    {
+      "id": "REQ-22",
+      "requirement": "Ensure `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` accept/persist/return `tags` end-to-end; default to empty array when created without tags.",
+      "reason": "backend/main.mo shows `MarketplaceBlueprint` now includes `tags : [Text]`, and a migration backfills `tags = []`, but the diff summary does not show changes to the implementations/signatures of the listed methods.",
+      "evidence": [
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "id": "REQ-23",
+      "requirement": "Update `frontend/src/lib/demoData.ts` demoBlueprints so all entries include a `tags` array (default `[]` where appropriate).",
+      "reason": "demoData.ts is truncated and does not show the `demoBlueprints` objects/entries being updated to include `tags`.",
+      "evidence": [
+        "frontend/src/lib/demoData.ts"
+      ]
+    },
+    {
+      "id": "REQ-24",
+      "requirement": "Publishing from Studio creates/updates a marketplace blueprint via existing backend method `createMarketplaceBlueprint` and includes tags; `useGetMarketplaceBlueprints` returns those tags.",
+      "reason": "The diff summary does not include visible code showing the publish flow calling `createMarketplaceBlueprint` with `tags`, nor does it show `useGetMarketplaceBlueprints` mapping/returning `tags` from the backend response (useQueries.ts is truncated; the separate file-summary text is not reliable evidence of actual code).",
+      "evidence": [
+        "frontend/src/components/StepBasedBlueprintBuilder.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "id": "REQ-25",
+      "requirement": "Display blueprint tags on marketplace cards as small readable badges/chips when present.",
+      "reason": "MarketplacePage.tsx shows search filtering includes `bp.tags`, but the truncated portion does not show rendering of tags as badges/chips on the cards.",
+      "evidence": [
+        "frontend/src/pages/MarketplacePage.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added a backend migration module (`backend/migration.mo`) to transform existing marketplace blueprints by adding `tags = []`.",
+      "reason": "BuildRequest did not request a migration file/module; it only required adding tags support and defaulting to empty array for missing tags.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo"
+      ]
+    }
+  ],
+  "confidence": 0.63,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/StepBasedBlueprintBuilder.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/demoData.ts",
+    "frontend/src/pages/MarketplacePage.tsx",
+    "frontend/src/types/index.ts",
+    "project_state.json"
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "kind": "build_request",
+  "title": "Add free-form tags to blueprint publishing and marketplace search",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-21",
+      "text": "Add a free-form tags section to the Step-Based Blueprint Studio publish flow so a creator can enter multiple tags (stored as an array of strings), remove tags, and see the current tag list before publishing. Do not add categories.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results. no need to have any categories or whatever"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In the publish step of the step-based builder, there is a clearly labeled \"Tags\" input that supports adding multiple tags and removing existing tags",
+        "Tags are treated as free-form text (no predefined category list and no category UI)",
+        "Publishing includes the tags entered by the creator in the publish submission payload"
+      ]
+    },
+    {
+      "id": "REQ-22",
+      "text": "Extend the backend marketplace blueprint model to support tags by adding a `tags : [Text]` field to `MarketplaceBlueprint` in `backend/main.mo` and ensure `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` store/return tags end-to-end.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results."
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Motoko `MarketplaceBlueprint` type includes `tags : [Text]`",
+        "`createMarketplaceBlueprint` accepts and persists the `tags` field",
+        "`getMarketplaceBlueprint` and `getMarketplaceBlueprints` return `tags` for each blueprint",
+        "If a blueprint is created without tags, its tags value is an empty array"
+      ]
+    },
+    {
+      "id": "REQ-23",
+      "text": "Update frontend shared types and demo marketplace blueprints to include tags by adding `tags: string[]` to the `MarketplaceBlueprint` interface in `frontend/src/types/index.ts` and updating `frontend/src/lib/demoData.ts` demoBlueprints to include `tags` (default to `[]` where appropriate).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results."
+        ]
+      },
+      "acceptanceCriteria": [
+        "TypeScript `MarketplaceBlueprint` includes `tags: string[]`",
+        "All entries in `demoBlueprints` provide a `tags` array (can be empty)"
+      ]
+    },
+    {
+      "id": "REQ-24",
+      "text": "Ensure publishing from the Step-Based Blueprint Studio creates/updates a marketplace blueprint record that includes tags, so marketplace search can use the tags creators entered. Use the existing backend method `createMarketplaceBlueprint` in addition to the existing project-blueprint creation, and include tags in the created marketplace blueprint.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results."
+        ]
+      },
+      "acceptanceCriteria": [
+        "After publishing a blueprint in Studio, a corresponding marketplace blueprint exists in the backend with the submitted tags",
+        "Marketplace blueprints returned by `useGetMarketplaceBlueprints` include the tags created in Studio"
+      ]
+    },
+    {
+      "id": "REQ-25",
+      "text": "Enhance marketplace search to match tags by updating the filtering logic in `frontend/src/pages/MarketplacePage.tsx` so the search query matches against `blueprint.tags` in addition to the existing checks (case-insensitive). Also display blueprint tags on marketplace cards as small readable badges/chips when present.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "so when people search for a blueprint then it will help search results"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Typing a tag term into the Marketplace search returns blueprints whose tags include the term (case-insensitive)",
+        "Marketplace cards render tags when `tags.length > 0`"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not implement categories or any category UI; tags only.",
+    "Respect the single-actor backend architecture: all Motoko logic changes must be made in backend/main.mo.",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead."
+  ],
+  "nonGoals": [
+    "No tag suggestions, autocomplete, or popular-tag discovery endpoints.",
+    "No category management or admin-curated taxonomy.",
+    "No changes to Explore page search unless required for compilation."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
