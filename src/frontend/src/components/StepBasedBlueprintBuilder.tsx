@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useCreateStepBasedBlueprint } from '../hooks/useQueries';
+import { useActor } from '../hooks/useActor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import OfflineModeNotice from './OfflineModeNotice';
 
 type BlockType = 'text' | 'question' | 'dropdown' | 'checklist' | 'dailyStep';
 
@@ -102,6 +104,7 @@ const predefinedThemes: ColorTheme[] = [
 export default function StepBasedBlueprintBuilder() {
   const navigate = useNavigate();
   const createBlueprint = useCreateStepBasedBlueprint();
+  const { actor, isFetching: actorFetching } = useActor();
 
   const [currentStep, setCurrentStep] = useState<'build' | 'preview' | 'publish'>('build');
   const [steps, setSteps] = useState<Step[]>([]);
@@ -444,6 +447,8 @@ export default function StepBasedBlueprintBuilder() {
     return selectedTheme;
   };
 
+  const isBackendReady = !!actor && !actorFetching;
+
   const handlePublish = async () => {
     if (!blueprintTitle.trim()) {
       toast.error('Please enter a blueprint title');
@@ -490,10 +495,10 @@ export default function StepBasedBlueprintBuilder() {
         tags,
       });
 
-      toast.success('Blueprint created successfully!');
-      navigate({ to: '/studio' });
+      navigate({ to: '/marketplace' });
     } catch (error: any) {
-      toast.error(error.message || 'Failed to publish blueprint');
+      // Error handling is done in the mutation's onError
+      console.error('Publish error:', error);
     }
   };
 
@@ -1075,6 +1080,11 @@ export default function StepBasedBlueprintBuilder() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Offline Mode Notice */}
+            {!isBackendReady && (
+              <OfflineModeNotice />
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="title">Blueprint Title *</Label>
               <Input
@@ -1417,10 +1427,12 @@ export default function StepBasedBlueprintBuilder() {
                 {createBlueprint.isPending ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Publishing...
+                    {isBackendReady ? 'Publishing...' : 'Saving...'}
                   </>
-                ) : (
+                ) : isBackendReady ? (
                   'Publish Blueprint'
+                ) : (
+                  'Save Locally'
                 )}
               </Button>
             </div>

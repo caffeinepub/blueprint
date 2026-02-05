@@ -27,17 +27,22 @@ export default function BlueprintDetailsPage() {
   const { data: blueprints = [] } = useGetMarketplaceBlueprints();
   const blueprint = blueprints.find(bp => bp.id === blueprintId);
   
-  const { data: isOwned = false } = useCheckBlueprintOwnership(
+  // Check if this is a demo blueprint
+  const isDemo = blueprintId ? isDemoBlueprint(blueprintId) : false;
+  
+  // For non-demo blueprints, check backend ownership
+  const { data: backendOwned = false } = useCheckBlueprintOwnership(
     identity?.getPrincipal() || null,
-    blueprintId || null
+    (blueprintId && !isDemo) ? blueprintId : null // Only check backend for non-demo blueprints
   );
   
-  // Check if user owns this demo blueprint
-  const isDemoOwned = blueprintId && isDemoBlueprint(blueprintId) 
+  // For demo blueprints, check session-based ownership
+  const demoOwned = isDemo && blueprintId
     ? hasUserPurchasedDemoBlueprint(blueprintId, currentUserId)
     : false;
   
-  const actuallyOwned = isOwned || isDemoOwned;
+  // Combine ownership checks
+  const actuallyOwned = backendOwned || demoOwned;
   
   const { data: reviews = [] } = useGetReviews(blueprintId || null);
   const purchaseBlueprint = usePurchaseBlueprint();

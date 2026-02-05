@@ -205,6 +205,7 @@ export interface _SERVICE {
   >,
   'addReview' : ActorMethod<[string, Review], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'checkBlueprintOwnership' : ActorMethod<[Principal, string], boolean>,
   'createCheckoutSession' : ActorMethod<
     [Array<ShoppingItem>, string, string],
     string
@@ -218,6 +219,7 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getComments' : ActorMethod<[PostId], Array<Comment>>,
+  'getCreatedBlueprints' : ActorMethod<[], Array<string>>,
   'getDailyTasks' : ActorMethod<[], Array<[Time, DailyTask]>>,
   'getFollowers' : ActorMethod<[Principal], bigint>,
   'getMarketplaceBlueprint' : ActorMethod<

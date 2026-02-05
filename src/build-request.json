@@ -1,106 +1,52 @@
 {
   "kind": "build_request",
-  "title": "Add free-form tags to blueprint publishing and marketplace search",
+  "title": "Fix purchased blueprints not appearing in My Blueprints → Purchased after buying",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-21",
-      "text": "Add a free-form tags section to the Step-Based Blueprint Studio publish flow so a creator can enter multiple tags (stored as an array of strings), remove tags, and see the current tag list before publishing. Do not add categories.",
+      "id": "REQ-1",
+      "text": "Fix demo-vs-real blueprint detection so that real, user-created marketplace blueprints are not treated as demo blueprints during purchase/ownership flows, ensuring that purchasing a real blueprint calls the backend purchase API and can therefore appear in My Blueprints → Purchased.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-4"
         ],
         "quotes": [
-          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results. no need to have any categories or whatever"
+          "the blueprints should show up in the my blueprints tab under purchased after you buy them"
         ]
       },
       "acceptanceCriteria": [
-        "In the publish step of the step-based builder, there is a clearly labeled \"Tags\" input that supports adding multiple tags and removing existing tags",
-        "Tags are treated as free-form text (no predefined category list and no category UI)",
-        "Publishing includes the tags entered by the creator in the publish submission payload"
+        "A blueprint created/published by a signed-in user (online publish) is NOT classified as a demo blueprint solely because its ID starts with \"blueprint-\".",
+        "When clicking Buy/Get on a real marketplace blueprint, the app calls the backend `purchaseBlueprint(blueprintId)` mutation rather than recording a sessionStorage demo purchase.",
+        "Blueprint ownership checks for real marketplace blueprints use backend ownership (`checkBlueprintOwnership`) and not session demo ownership."
       ]
     },
     {
-      "id": "REQ-22",
-      "text": "Extend the backend marketplace blueprint model to support tags by adding a `tags : [Text]` field to `MarketplaceBlueprint` in `backend/main.mo` and ensure `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` store/return tags end-to-end.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-20"
-        ],
-        "quotes": [
-          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results."
-        ]
-      },
-      "acceptanceCriteria": [
-        "The Motoko `MarketplaceBlueprint` type includes `tags : [Text]`",
-        "`createMarketplaceBlueprint` accepts and persists the `tags` field",
-        "`getMarketplaceBlueprint` and `getMarketplaceBlueprints` return `tags` for each blueprint",
-        "If a blueprint is created without tags, its tags value is an empty array"
-      ]
-    },
-    {
-      "id": "REQ-23",
-      "text": "Update frontend shared types and demo marketplace blueprints to include tags by adding `tags: string[]` to the `MarketplaceBlueprint` interface in `frontend/src/types/index.ts` and updating `frontend/src/lib/demoData.ts` demoBlueprints to include `tags` (default to `[]` where appropriate).",
+      "id": "REQ-2",
+      "text": "Ensure that after a successful real purchase, the My Blueprints page shows the purchased blueprint under the Purchased tab (without requiring a hard refresh), by making sure the owned-blueprints query state is refreshed and the Purchased list is derived from the refreshed owned records.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-4"
         ],
         "quotes": [
-          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results."
+          "the blueprints should show up in the my blueprints tab under purchased after you buy them"
         ]
       },
       "acceptanceCriteria": [
-        "TypeScript `MarketplaceBlueprint` includes `tags: string[]`",
-        "All entries in `demoBlueprints` provide a `tags` array (can be empty)"
-      ]
-    },
-    {
-      "id": "REQ-24",
-      "text": "Ensure publishing from the Step-Based Blueprint Studio creates/updates a marketplace blueprint record that includes tags, so marketplace search can use the tags creators entered. Use the existing backend method `createMarketplaceBlueprint` in addition to the existing project-blueprint creation, and include tags in the created marketplace blueprint.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-20"
-        ],
-        "quotes": [
-          "i just want there to be a tags section when creating a blueprint, so when people search for a blueprint then it will help search results."
-        ]
-      },
-      "acceptanceCriteria": [
-        "After publishing a blueprint in Studio, a corresponding marketplace blueprint exists in the backend with the submitted tags",
-        "Marketplace blueprints returned by `useGetMarketplaceBlueprints` include the tags created in Studio"
-      ]
-    },
-    {
-      "id": "REQ-25",
-      "text": "Enhance marketplace search to match tags by updating the filtering logic in `frontend/src/pages/MarketplacePage.tsx` so the search query matches against `blueprint.tags` in addition to the existing checks (case-insensitive). Also display blueprint tags on marketplace cards as small readable badges/chips when present.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-20"
-        ],
-        "quotes": [
-          "so when people search for a blueprint then it will help search results"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Typing a tag term into the Marketplace search returns blueprints whose tags include the term (case-insensitive)",
-        "Marketplace cards render tags when `tags.length > 0`"
+        "Immediately after purchasing a real blueprint and navigating to My Blueprints → Purchased, the purchased blueprint appears in the list.",
+        "The Purchased tab shows purchased items based on backend `getOwnedBlueprints()` results merged against the marketplace blueprint list (as it does today), and updates when the owned-blueprints query is invalidated/refetched."
       ]
     }
   ],
   "constraints": [
-    "Do not implement categories or any category UI; tags only.",
-    "Respect the single-actor backend architecture: all Motoko logic changes must be made in backend/main.mo.",
-    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead."
+    "Do not edit files under frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Backend must remain single-actor (all Motoko logic in backend/main.mo); only add migration if state schema changes are required."
   ],
   "nonGoals": [
-    "No tag suggestions, autocomplete, or popular-tag discovery endpoints.",
-    "No category management or admin-curated taxonomy.",
-    "No changes to Explore page search unless required for compilation."
+    "Do not redesign the Marketplace or My Blueprints UI beyond what is necessary to make purchased items appear correctly.",
+    "Do not add new authentication methods beyond Internet Identity.",
+    "Do not introduce new storage layers or external databases."
   ],
   "imageRequirements": {
     "required": [],

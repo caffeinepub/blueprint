@@ -1,9 +1,9 @@
 import { Principal } from '@dfinity/principal';
 import type { Post, Comment, MarketplaceBlueprint, Review, UserProfile } from '../types';
 
-// Demo mode flag - set to true for development/testing
+// Demo mode flag - only use demo data when backend is not available
 export function isDemoModeEnabled(): boolean {
-  return true; // Always show demo data in development
+  return false; // Demo data is now a fallback, not the default
 }
 
 // Demo user profiles

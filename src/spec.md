@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Add free-form tags to blueprint publishing and use those tags in marketplace search and display.
+**Goal:** Ensure real marketplace blueprint purchases are handled via backend ownership so they appear immediately in My Blueprints → Purchased after buying.
 
 **Planned changes:**
-- Add a “Tags” section to the Step-Based Blueprint Studio publish flow that lets creators add/remove multiple free-form text tags and review the current list before publishing.
-- Extend the backend `MarketplaceBlueprint` model to persist and return `tags : [Text]` end-to-end through `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` (defaulting to an empty array when absent).
-- Update frontend shared types and demo marketplace data to include `tags: string[]`.
-- Ensure Studio publishing also creates/updates a marketplace blueprint record that includes the submitted tags (using the existing `createMarketplaceBlueprint` flow in addition to existing project-blueprint creation).
-- Update marketplace search filtering to match against `blueprint.tags` (case-insensitive) and render blueprint tags on marketplace cards as readable badges/chips when present.
+- Update demo-vs-real blueprint detection so real, user-created marketplace blueprints are not treated as demo items based on an ID prefix.
+- Ensure buying a real marketplace blueprint calls the backend `purchaseBlueprint(blueprintId)` mutation (instead of sessionStorage demo purchase tracking).
+- Ensure ownership checks for real marketplace blueprints use backend ownership (`checkBlueprintOwnership`) rather than session-based demo ownership.
+- After a successful backend purchase, refresh/invalidate the owned-blueprints query state so My Blueprints → Purchased reflects the new purchase without a hard refresh.
 
-**User-visible outcome:** Creators can add free-form tags when publishing a blueprint, and users can search marketplace blueprints by those tags and see tags displayed on blueprint cards.
+**User-visible outcome:** After buying a real marketplace blueprint, it shows up right away under My Blueprints → Purchased, and purchase/ownership status is correctly tracked via the backend.

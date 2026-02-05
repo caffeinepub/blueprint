@@ -12,6 +12,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import ChatPage from './pages/ChatPage';
 import MyBlueprintsPage from './pages/MyBlueprintsPage';
 import StudioPage from './pages/StudioPage';
+import CalendarPage from './pages/CalendarPage';
 
 const rootRoute = createRootRoute({
   component: Layout,
@@ -85,6 +86,12 @@ const studioRoute = createRoute({
   component: StudioPage,
 });
 
+const calendarRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/calendar',
+  component: CalendarPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   homeRoute,
@@ -97,6 +104,7 @@ const routeTree = rootRoute.addChildren([
   chatRoute,
   myBlueprintsRoute,
   studioRoute,
+  calendarRoute,
 ]);
 
 const router = createRouter({ 

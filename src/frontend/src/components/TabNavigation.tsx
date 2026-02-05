@@ -1,11 +1,12 @@
 import { Link, useLocation } from '@tanstack/react-router';
-import { Home, Search, Bell, MessageSquare, Sparkles, ShoppingBag } from 'lucide-react';
+import { Home, Search, Bell, MessageSquare, Sparkles, ShoppingBag, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { name: 'Home', path: '/', icon: Home },
   { name: 'Explore', path: '/explore', icon: Search },
   { name: 'Marketplace', path: '/marketplace', icon: ShoppingBag },
+  { name: 'Calendar', path: '/calendar', icon: CalendarDays },
   { name: 'Notifications', path: '/notifications', icon: Bell },
   { name: 'Chat', path: '/chat', icon: MessageSquare },
   { name: 'My Blueprints', path: '/my-blueprints', icon: 'blueprint' },

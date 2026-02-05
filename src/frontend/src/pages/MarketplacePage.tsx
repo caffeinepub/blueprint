@@ -8,20 +8,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Star, ShoppingCart, Loader2 } from 'lucide-react';
 import { useGetMarketplaceBlueprints, usePurchaseBlueprint, useGetReviews } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useActor } from '../hooks/useActor';
 import { toast } from 'sonner';
 import SignInPrompt from '../components/SignInPrompt';
+import OfflineModeNotice from '../components/OfflineModeNotice';
 import { getAverageRating } from '../lib/demoData';
 import { isDemoBlueprint, hasUserPurchasedDemoBlueprint, addDemoPurchase } from '../lib/demoInteractions';
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
+  const { actor } = useActor();
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const [signInAction, setSignInAction] = useState('purchase blueprints');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
 
   const isAuthenticated = !!identity;
+  const isBackendReady = !!actor;
   const currentUserId = identity?.getPrincipal().toString() || 'guest';
 
   const { data: blueprints = [], isLoading } = useGetMarketplaceBlueprints();
@@ -105,6 +109,11 @@ export default function MarketplacePage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Offline Mode Notice */}
+      {!isBackendReady && (
+        <OfflineModeNotice />
+      )}
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold">Blueprint Marketplace</h1>
         <div className="flex gap-2">
@@ -176,6 +185,9 @@ function BlueprintCard({ blueprint, currentUserId, onPurchase, onViewDetails, is
   // Check if user owns this demo blueprint
   const isDemoOwned = isDemoBlueprint(blueprint.id) && hasUserPurchasedDemoBlueprint(blueprint.id, currentUserId);
   
+  // Check if this is a local blueprint
+  const isLocal = blueprint.id.startsWith('local-blueprint-');
+  
   // Calculate average rating
   const averageRating = useMemo(() => {
     if (reviews.length === 0) return getAverageRating(blueprint.id);
@@ -201,7 +213,12 @@ function BlueprintCard({ blueprint, currentUserId, onPurchase, onViewDetails, is
             />
           )}
         </div>
-        <CardTitle className="text-lg">{blueprint.id}</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          {blueprint.id}
+          {isLocal && (
+            <Badge variant="outline" className="text-xs">Local</Badge>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground line-clamp-2">

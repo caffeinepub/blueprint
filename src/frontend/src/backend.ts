@@ -282,6 +282,7 @@ export interface backendInterface {
     addReaction(postId: PostId, reactionType: Variant_sad_wow_angry_haha_like_love): Promise<void>;
     addReview(blueprintId: string, review: Review): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    checkBlueprintOwnership(user: Principal, blueprintId: string): Promise<boolean>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createMarketplaceBlueprint(blueprint: MarketplaceBlueprint): Promise<void>;
     createPost(post: Post): Promise<void>;
@@ -292,6 +293,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getComments(postId: PostId): Promise<Array<Comment>>;
+    getCreatedBlueprints(): Promise<Array<string>>;
     getDailyTasks(): Promise<Array<[Time, DailyTask]>>;
     getFollowers(user: Principal): Promise<bigint>;
     getMarketplaceBlueprint(blueprintId: string): Promise<MarketplaceBlueprint | null>;
@@ -479,6 +481,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async checkBlueprintOwnership(arg0: Principal, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.checkBlueprintOwnership(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.checkBlueprintOwnership(arg0, arg1);
+            return result;
+        }
+    }
     async createCheckoutSession(arg0: Array<ShoppingItem>, arg1: string, arg2: string): Promise<string> {
         if (this.processError) {
             try {
@@ -616,6 +632,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getComments(arg0);
+            return result;
+        }
+    }
+    async getCreatedBlueprints(): Promise<Array<string>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCreatedBlueprints();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCreatedBlueprints();
             return result;
         }
     }

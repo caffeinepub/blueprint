@@ -1,429 +1,337 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 15,
-  "summary": "Blueprint is a full-stack community + marketplace app built for the Internet Computer. Users authenticate with Internet Identity (with guest read-only browsing), create/manage profiles, post updates to a social feed, like/comment/follow, browse a marketplace of user-created blueprints, purchase/claim blueprints (free or paid), and leave reviews/comments. A Studio provides a step-based, block-driven blueprint builder (steps containing draggable/editable content blocks like text/questions/dropdowns/checklists) with theme/media customization and a publish flow. The app includes demo-mode seed content and local demo interactions for testing when backend connectivity or real user content is limited. The Motoko backend provides role-based authorization (admin/user/guest), persistence via in-canister maps for posts/comments/profiles/blueprints/ownership/reviews/messages/progress data, Stripe checkout session helpers via HTTP outcalls, and a blob-storage mixin for gateway authorization and garbage-collection workflows.",
+  "projectStateVersion": 3,
+  "summary": "Blueprint is a full-stack Internet Computer (Motoko) + React application combining a social feed with a marketplace for publishing and purchasing “blueprints” (step-based plans). Users authenticate with Internet Identity, set up profiles, browse/create/like/comment on posts, follow other users, browse marketplace blueprints (with demo and offline fallbacks), purchase blueprints (with ownership checks), and leave reviews (ownership-gated). The Studio provides a step-based blueprint builder (steps + multiple block types) that can publish online to the canister or save locally when offline; locally published marketplace metadata is merged into the marketplace and “My Blueprints” views. A Calendar page derives per-day tasks from blueprint blocks (dailyStep and checklist) and stores completion state in localStorage. The backend also includes RBAC authorization, Stripe checkout via HTTPS outcalls, and blob-storage utilities.",
   "existing_features": [
     {
       "id": "IF-1",
-      "title": "Internet Identity authentication provider",
+      "title": "Internet Identity authentication context",
       "synonyms": [
         "II auth",
-        "login/logout context"
+        "AuthClient provider"
       ],
-      "description": "Provides app-wide authentication via Internet Identity using @dfinity/auth-client. Persists identity across reloads, exposes login/logout (clear) actions, and surfaces status flags (initializing/logging-in/success/error) for UI gating.",
+      "description": "Provides an authentication context (`InternetIdentityProvider` + `useInternetIdentity`) built on `@dfinity/auth-client`, including login/logout, loading stored delegations, and status flags (initializing/logging-in/success/error).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-2",
-      "title": "Backend actor creation and session bootstrap",
+      "title": "Backend actor creation (anonymous and authenticated) with query rebinding",
       "synonyms": [
-        "ICP actor hook",
-        "useActor"
+        "useActor",
+        "canister actor bootstrap"
       ],
-      "description": "Creates an authenticated or anonymous canister actor via createActorWithConfig. For authenticated users, calls _initializeAccessControlWithSecret using a secret extracted from URL hash/session (caffeineAdminToken) and invalidates/refetches dependent React Query caches when identity/actor changes.",
+      "description": "Creates an anonymous actor for guests and an authenticated actor (identity-attached) for signed-in users. After actor creation, invalidates/refetches non-actor React Query caches so data binds to the latest actor/identity.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-3",
-      "title": "Role-based access control (admin/user/guest)",
+      "title": "Role-based access control (admin/user/guest) with initialization secret",
       "synonyms": [
-        "authorization",
-        "permissions"
+        "RBAC",
+        "AccessControl"
       ],
-      "description": "Motoko access-control module and authorization mixin that assign roles and enforce permissions across sensitive methods. Admin initialization uses an environment token (CAFFEINE_ADMIN_TOKEN) and a user-supplied secret; includes admin checks and role assignment helpers.",
+      "description": "Motoko access-control layer registers users and optionally assigns the first admin based on an environment-provided admin token; exposes role queries and admin-only role assignment.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-4",
-      "title": "Connection status indicator for backend availability",
+      "title": "Connection status UI with retry/error states",
       "synonyms": [
-        "engine status",
-        "reconnect banner"
+        "ConnectionStatus",
+        "useActorConnection"
       ],
-      "description": "UI component (ConnectionStatus) and hook (useActorConnection) that track actor connectivity, retry attempts, and error escalation; displays connecting/reconnecting/ready/error banners and offers a retry (page reload) action on persistent failure.",
+      "description": "Tracks actor connectivity and displays connecting/reconnecting banners with retry counts, a transient success banner on reconnection, and an error banner after repeated failures (with a reload-based retry action).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-5",
-      "title": "Demo content and local demo interactions",
+      "title": "App routing and layout with tab navigation",
       "synonyms": [
-        "demo mode",
-        "session demo likes/comments/purchases"
+        "TanStack Router",
+        "Layout + TabNavigation"
       ],
-      "description": "Supplies demo users/posts/blueprints/comments/reviews and merges session-scoped demo interactions (likes, comments, purchases) stored in sessionStorage. Allows interactive UX without backend calls for demo content.",
+      "description": "Defines routes for Home, Explore, Marketplace, Blueprint Details, Calendar, Notifications, Chat, My Blueprints, Studio, and Profile, with a shared layout (Header + ConnectionStatus + tab bar + routed outlet).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-6",
-      "title": "Social feed: fetch and display posts with blueprint attachments",
+      "title": "User profiles: fetch/save and onboarding modal",
       "synonyms": [
-        "home feed",
-        "posts list"
+        "getCallerUserProfile",
+        "saveCallerUserProfile",
+        "ProfileSetupModal"
       ],
-      "description": "Fetches posts via React Query (with demo fallback) and renders a feed with post metadata, engagement counts, and attached marketplace blueprint preview cards that deep-link to blueprint details.",
+      "description": "Implements profile fetching for the caller and arbitrary principals, profile saving for the caller, and a first-time setup modal that collects username/bio and persists the profile via mutation with validation/toasts.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-7",
-      "title": "Create post with optional blueprint attachment",
+      "title": "Social feed: posts listing with demo fallback",
       "synonyms": [
-        "post composer",
-        "share update"
+        "getPosts",
+        "demoPosts fallback"
       ],
-      "description": "Authenticated users can create a post from the Home page with text content and an optional attached blueprint id. Mutation invalidates the posts query on success and surfaces user-friendly toast errors when backend/auth is unavailable.",
+      "description": "Fetches posts from the canister when available; if backend is unavailable or the method is missing, displays seeded demo posts so the feed remains usable.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-8",
-      "title": "Like/unlike posts with optimistic UI update",
+      "title": "Create post (authenticated) with optional blueprint attachment",
       "synonyms": [
-        "post reactions",
-        "heart toggle"
+        "createPost",
+        "post composer"
       ],
-      "description": "Supports liking/unliking posts through a backend mutation with optimistic cache updates (increment/decrement likes and update likedBy) and rollback on error. Demo posts use local sessionStorage toggling.",
+      "description": "Allows authenticated users to create a post (optionally attaching a marketplace blueprint id) and invalidates the posts query on success; displays user-friendly errors when backend/auth is not ready.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-9",
-      "title": "Comments: fetch and add comments per post",
+      "title": "Like/unlike posts with optimistic updates",
       "synonyms": [
-        "post replies",
-        "threaded comments (flat)"
+        "likePost",
+        "post reactions"
       ],
-      "description": "Fetches comments for a given post and allows authenticated users to add a comment via backend. Demo posts support local comment creation and display by merging session-stored demo comments.",
+      "description": "Implements like/unlike via backend mutation with optimistic React Query cache updates, rollback on error, and actionable toast messages for common failure causes (not connected / not authenticated).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-10",
-      "title": "User profiles: create/save and view profiles",
+      "title": "Comments: list and add comments with demo fallback",
       "synonyms": [
-        "profile setup",
-        "profile page"
+        "getComments",
+        "addComment"
       ],
-      "description": "Backend supports saving and fetching caller/other user profiles. Frontend includes a first-time ProfileSetupModal (username + bio) and a ProfilePage that displays avatar/banner/bio/follow counts with guest protection for viewing self profile.",
+      "description": "Fetches comments per post (demo fallback when backend is unavailable) and allows authenticated users to add comments, invalidating posts and comment queries on success.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-11",
-      "title": "Follow and unfollow users",
+      "title": "Demo interactions stored client-side for demo content",
       "synonyms": [
-        "social graph",
-        "follow button"
+        "session demo mode",
+        "demo likes/comments/purchases"
       ],
-      "description": "Provides backend follow/unfollow endpoints and frontend mutations wired into ProfilePage to toggle following state (with sign-in prompting).",
+      "description": "Stores likes, comments, and purchases for demo posts/blueprints in sessionStorage, allowing interactive demo behavior without backend writes (including demo ownership states).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-12",
-      "title": "Marketplace browsing with search and sorting",
+      "title": "Follow and unfollow users",
       "synonyms": [
-        "blueprint marketplace",
-        "storefront"
+        "social graph",
+        "followUser/unfollowUser"
       ],
-      "description": "Lists marketplace blueprints (demo fallback), supports client-side search filtering and sorting (popular/recent/price), displays ratings (computed from reviews or demo reviews), and links to details pages.",
+      "description": "Provides auth-gated mutations to follow/unfollow other principals and invalidates relevant profile queries after updates; Profile UI exposes follow/unfollow for non-self profiles.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-13",
-      "title": "Blueprint details, purchase flow, and reviews",
+      "title": "Marketplace blueprint listing with merge (backend + demo + local)",
       "synonyms": [
-        "blueprint product page",
-        "checkout"
+        "getMarketplaceBlueprints",
+        "offline marketplace"
       ],
-      "description": "BlueprintDetailsPage shows themed banner/image, pricing, average ratings, purchase button (demo purchases stored locally), and reviews listing. Authenticated owners can submit reviews via backend mutation.",
+      "description": "Lists marketplace blueprints from the backend when available and merges in demo blueprints and locally published blueprints (deduped by id), enabling browsing offline or when backend methods are missing.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-14",
-      "title": "Blueprint Studio: step-based blueprint builder with drag-and-drop blocks",
+      "title": "Marketplace search/sort and blueprint details view",
       "synonyms": [
-        "blueprint builder",
-        "studio editor"
+        "MarketplacePage",
+        "BlueprintDetailsPage"
       ],
-      "description": "Interactive step-based editor that supports adding/removing/reordering steps and blocks (text/question/dropdown/checklist/daily step), inline editing, duplication, collapsible steps, preview mode, and a publish form with optional media and theme customization.",
+      "description": "Marketplace supports search across description/id/tags and sorting (recent/price). Details view shows theme-styled banner/image, pricing, ownership state, purchase button, and reviews.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-15",
-      "title": "Project blueprint storage and listing (backend)",
+      "title": "Purchases and ownership (purchase, ownership check, owned list) + My Blueprints purchased tab",
       "synonyms": [
-        "step blueprint persistence",
-        "projectBlueprints"
+        "purchaseBlueprint",
+        "checkBlueprintOwnership",
+        "getOwnedBlueprints",
+        "MyBlueprintsPage Purchased"
       ],
-      "description": "Backend supports creating and listing project blueprints (getProjectBlueprints / createProjectBlueprint) by converting step views into internal maps for steps/blocks.",
+      "description": "Backend supports purchasing marketplace blueprints and storing per-user ownership records; frontend can check ownership for a given blueprint, fetch owned blueprint records, and display purchased blueprints by joining ownership records to marketplace metadata.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-16",
-      "title": "Messaging system (backend)",
+      "title": "Reviews: list and submit reviews (ownership-gated)",
       "synonyms": [
-        "DMs backend",
-        "conversations"
+        "getReviews",
+        "addReview"
       ],
-      "description": "Backend supports retrieving and sending messages per conversation id with participant checks. Frontend includes Chat/Messages pages with authenticated gating and placeholder/empty states (per provided summaries).",
+      "description": "Fetches reviews per blueprint (demo fallback when backend unavailable) and allows authenticated owners to submit reviews; backend enforces ownership before accepting a review.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-17",
-      "title": "Personal progress tracking primitives (backend)",
+      "title": "Step-based blueprint builder (Studio)",
       "synonyms": [
-        "daily tasks",
-        "weight entries",
-        "progress"
+        "StepBasedBlueprintBuilder",
+        "project blueprint editor"
       ],
-      "description": "Backend includes endpoints and storage for personal blueprint, daily tasks, weight entries, and progress snapshots, with permission checks for authenticated users.",
+      "description": "Interactive builder for creating step-based blueprints with steps and block types (text, question, dropdown, checklist, dailyStep), step/block drag-and-drop, duplication/deletion, preview mode, tags, theme selection/custom colors, and optional image/banner uploads.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-18",
-      "title": "Stripe checkout session integration (backend)",
+      "title": "Blueprint publishing: online to backend or offline to localStorage",
       "synonyms": [
-        "payments",
-        "Stripe outcalls"
+        "createProjectBlueprint",
+        "createMarketplaceBlueprint",
+        "offline local publish"
       ],
-      "description": "Backend includes Stripe helper module to create checkout sessions and query session status via HTTP outcalls with transform support, plus admin-settable Stripe configuration.",
+      "description": "When online, publishes a ProjectBlueprintView and MarketplaceBlueprint to the canister (including images as ExternalBlob). When offline (no actor), saves a serializable marketplace blueprint subset locally and merges it into marketplace/created lists with event-driven refresh.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-19",
-      "title": "Blob storage gateway mixin (backend)",
+      "title": "Locally published blueprint storage utilities",
       "synonyms": [
-        "external blob storage",
-        "storage GC"
+        "localPublishedBlueprints",
+        "local-blueprint-published event"
       ],
-      "description": "Includes a storage mixin supporting gateway principal authorization updates, dead-blob enumeration and pruning confirmation, cashier refill mechanics (cycle top-ups), and certificate creation for uploads.",
+      "description": "Provides BigInt/Principal-safe serialization/deserialization for locally published marketplace blueprints in localStorage, dedupes by id, and emits a custom browser event to invalidate React Query caches immediately.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-20",
-      "title": "App shell: routing, navigation, loading screen, and toasts",
+      "title": "Project blueprint storage and retrieval (backend) + caller-scoped calendar feed",
       "synonyms": [
-        "layout",
-        "tabs",
-        "header"
+        "projectBlueprints",
+        "getProjectBlueprints"
       ],
-      "description": "Provides TanStack Router route tree (home/explore/marketplace/details/profile/notifications/chat/my-blueprints/studio), shared Layout with Header + TabNavigation, a blueprint-themed LoadingScreen, and global toast notifications via sonner.",
+      "description": "Backend stores project blueprints as maps of steps/blocks and exposes a view format for retrieval. Frontend fetches project blueprints and filters to those created by the caller for calendar/task usage.",
       "reqIds": [],
       "version": 1
     },
     {
-      "id": "feature-add-a-free-form-tags-section-to-the-step-based-blueprint-studio-publish-flow-so-a-creator-can-enter-multiple-tags-stored-as-an-array-of-strings-remove-tags-and-see-the-current-tag-list-before-publishing-do-not-add-categories",
-      "title": "Add a free-form tags section to the Step-Based Blueprint Studio publish flow so a creator can enter multiple tags (stored as an array of strings), remove tags, and see the current tag list before publishing. Do not add categories.",
+      "id": "IF-21",
+      "title": "Calendar: derive daily tasks from blueprint blocks with local completion",
+      "synonyms": [
+        "deriveTasksForDate",
+        "calendar task completion"
+      ],
+      "description": "Derives tasks for a selected date from `dailyStep` and `checklist` blocks (JSON-parsed content with fallbacks) and stores completion state in localStorage keyed by date; toggles completion via a React Query mutation.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-22",
+      "title": "Stripe checkout integration via IC HTTPS outcalls",
+      "synonyms": [
+        "createCheckoutSession",
+        "getStripeSessionStatus"
+      ],
+      "description": "Backend supports admin-configured Stripe credentials and user-scoped creation of checkout sessions and status queries using IC HTTPS outcalls with a transform function that strips headers and explicit cycle allocation.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-23",
+      "title": "Blob-storage gateway utilities and dead-blob pruning",
+      "synonyms": [
+        "caffeine storage mixin",
+        "authorized gateway principals"
+      ],
+      "description": "Backend includes a storage mixin for updating authorized gateway principals, listing dead blobs (authorized callers only), confirming deletion (with GC trigger), and refilling a cashier canister with cycles (env-var configured).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-24",
+      "title": "Direct messaging storage APIs (participant-gated)",
+      "synonyms": [
+        "sendMessage/getMessages",
+        "DM APIs"
+      ],
+      "description": "Backend stores per-conversation messages and exposes query/mutation APIs that enforce the caller is a participant in the conversation.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-25",
+      "title": "Personal weight-loss data APIs (backend)",
+      "synonyms": [
+        "saveBlueprint/getBlueprint",
+        "daily tasks/weight/progress"
+      ],
+      "description": "Backend includes user-scoped storage APIs for a personal blueprint object, daily task records, weight entries, and progress snapshots with RBAC enforcement.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-demo-vs-real-blueprint-detection-so-that-real-user-created-marketplace-blueprints-are-not-treated-as-demo-blueprints-during-purchase-ownership-flows-ensuring-that-purchasing-a-real-blueprint-calls-the-backend-purchase-api-and-can-therefore-appear-in-my-blueprints-purchased",
+      "title": "Fix demo-vs-real blueprint detection so that real, user-created marketplace blueprints are not treated as demo blueprints during purchase/ownership flows, ensuring that purchasing a real blueprint calls the backend purchase API and can therefore appear in My Blueprints → Purchased.",
       "reqIds": [
-        "REQ-21"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-frontend-shared-types-and-demo-marketplace-blueprints-to-include-tags-by-adding-tags-string-to-the-marketplaceblueprint-interface-in-frontend-src-types-index-ts-and-updating-frontend-src-lib-demodata-ts-demoblueprints-to-include-tags-default-to-where-appropriate",
-      "title": "Update frontend shared types and demo marketplace blueprints to include tags by adding `tags: string[]` to the `MarketplaceBlueprint` interface in `frontend/src/types/index.ts` and updating `frontend/src/lib/demoData.ts` demoBlueprints to include `tags` (default to `[]` where appropriate).",
+      "id": "feature-ensure-that-after-a-successful-real-purchase-the-my-blueprints-page-shows-the-purchased-blueprint-under-the-purchased-tab-without-requiring-a-hard-refresh-by-making-sure-the-owned-blueprints-query-state-is-refreshed-and-the-purchased-list-is-derived-from-the-refreshed-owned-records",
+      "title": "Ensure that after a successful real purchase, the My Blueprints page shows the purchased blueprint under the Purchased tab (without requiring a hard refresh), by making sure the owned-blueprints query state is refreshed and the Purchased list is derived from the refreshed owned records.",
       "reqIds": [
-        "REQ-23"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-publishing-from-the-step-based-blueprint-studio-creates-updates-a-marketplace-blueprint-record-that-includes-tags-so-marketplace-search-can-use-the-tags-creators-entered-use-the-existing-backend-method-createmarketplaceblueprint-in-addition-to-the-existing-project-blueprint-creation-and-include-tags-in-the-created-marketplace-blueprint",
-      "title": "Ensure publishing from the Step-Based Blueprint Studio creates/updates a marketplace blueprint record that includes tags, so marketplace search can use the tags creators entered. Use the existing backend method `createMarketplaceBlueprint` in addition to the existing project-blueprint creation, and include tags in the created marketplace blueprint.",
-      "reqIds": [
-        "REQ-24"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-enhance-marketplace-search-to-match-tags-by-updating-the-filtering-logic-in-frontend-src-pages-marketplacepage-tsx-so-the-search-query-matches-against-blueprint-tags-in-addition-to-the-existing-checks-case-insensitive-also-display-blueprint-tags-on-marketplace-cards-as-small-readable-badges-chips-when-present",
-      "title": "Enhance marketplace search to match tags by updating the filtering logic in `frontend/src/pages/MarketplacePage.tsx` so the search query matches against `blueprint.tags` in addition to the existing checks (case-insensitive). Also display blueprint tags on marketplace cards as small readable badges/chips when present.",
-      "reqIds": [
-        "REQ-25"
+        "REQ-2"
       ],
       "version": 1
     }
   ],
   "new_feature_requests": [
     {
-      "id": "AR-8",
-      "summary": "Add first-class tags to Marketplace blueprints in the backend by extending the `MarketplaceBlueprint` Motoko type in `backend/main.mo` with a `tags : [Text]` field (defaulting to `[]`), and ensure `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` include this field end-to-end.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "Implement backend support for tag discovery by adding a query method that returns a de-duplicated, case-insensitive normalized list of all tags currently used across all marketplace blueprints (e.g., `getMarketplaceTags() : async [Text]`).",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "Update frontend shared types to include tags by extending `MarketplaceBlueprint` in `frontend/src/types/index.ts` with `tags: string[]` and updating any demo blueprint objects to include `tags` (default to `[]` where missing).",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Add React Query support for tags by implementing a hook in `frontend/src/hooks/useQueries.ts` to fetch the backend tags list (e.g., `useGetMarketplaceTags`), with the same demo-mode/back-end-not-ready fallback behavior pattern used by existing marketplace hooks.",
-      "reqIds": [
-        "REQ-10"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-12",
-      "summary": "Update the Blueprint Studio publish flow UI (step-based builder) to let creators add and remove tags before publishing (free-form text entry, multiple tags). Ensure the publish submission includes these tags so they are persisted on the marketplace blueprint record.",
-      "reqIds": [
-        "REQ-11"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-13",
-      "summary": "Enhance Marketplace discovery to search by tags by updating `frontend/src/pages/MarketplacePage.tsx` filtering logic to match the search query against blueprint `tags` in addition to `id` and `description`, and display blueprint tags on marketplace cards and/or the blueprint details page.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Update Explore search behavior in `frontend/src/pages/ExplorePage.tsx` so blueprint search results count also considers tag matches (in addition to `id` and `description`).",
-      "reqIds": [
-        "REQ-13"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-15",
-      "summary": "Start with a minimal tags-based discovery system: allow creators to add free-form tags to blueprints and make Marketplace search match against tags (initially acceptable as a frontend-only/read-only implementation before persisting tags in the backend).",
+      "id": "AR-1",
+      "summary": "Ensure Marketplace purchases appear in My Blueprints → Purchased immediately after buying (ownership/library UI correctly reflects purchase state).",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-16",
-      "summary": "Extend the backend MarketplaceBlueprint model to support free-form tags by adding a `tags : [Text]` field (defaulting to `[]`) and ensure `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` return/store tags end-to-end.",
-      "reqIds": [
-        "REQ-14"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-17",
-      "summary": "Add a backend query method `getMarketplaceTags() : async [Text]` that returns a de-duplicated list of all tags used across marketplace blueprints, normalized case-insensitively (e.g., treat \"Fitness\" and \"fitness\" as the same tag in the returned list).",
-      "reqIds": [
-        "REQ-15"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-18",
-      "summary": "Implement a conditional Motoko upgrade migration so existing stored marketplace blueprints (created before tags existed) are upgraded to include `tags = []` without trapping on canister upgrade.",
-      "reqIds": [
-        "REQ-16"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-19",
-      "summary": "Update frontend types and demo content to support tags by adding `tags: string[]` to the `MarketplaceBlueprint` interface in `frontend/src/types/index.ts` and updating `frontend/src/lib/demoData.ts` demoBlueprints to include `tags` (default to `[]` where appropriate).",
-      "reqIds": [
-        "REQ-17"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-20",
-      "summary": "Add tag entry UI to the Step-Based Blueprint Studio publish flow (`frontend/src/components/StepBasedBlueprintBuilder.tsx`) so a creator can add/remove multiple free-form tags before publishing, and include the tags in the publish submission payload so they are persisted on the Marketplace blueprint record.",
-      "reqIds": [
-        "REQ-18"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-21",
-      "summary": "Update Marketplace search filtering in `frontend/src/pages/MarketplacePage.tsx` so the search query matches against blueprint tags in addition to `id` and `description` (case-insensitive). Also display blueprint tags on each blueprint card and/or on the blueprint details page as readable badges/chips.",
-      "reqIds": [
-        "REQ-19"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-22",
-      "summary": "Update Explore search behavior in `frontend/src/pages/ExplorePage.tsx` so blueprint search result counts consider matches against blueprint tags in addition to `id` and `description` (case-insensitive).",
-      "reqIds": [
-        "REQ-20"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-24",
-      "summary": "Extend the backend marketplace blueprint model to support tags by adding a `tags : [Text]` field to `MarketplaceBlueprint` in `backend/main.mo` and ensure `createMarketplaceBlueprint`, `getMarketplaceBlueprint`, and `getMarketplaceBlueprints` store/return tags end-to-end.",
-      "reqIds": [
-        "REQ-22"
-      ],
       "status": "pending"
     }
   ],
   "architectural_notes": [
-    "Frontend uses React + TanStack Router for routing and TanStack React Query for data fetching/caching, mutations, optimistic updates, and cache invalidation.",
-    "Authentication is handled via a React context (InternetIdentityProvider) that persists identities and exposes login/logout and status flags.",
-    "Backend access is encapsulated in hooks (useActor, useQueries) that build an ICP canister actor and call candid methods, with graceful fallback to demo data when needed.",
-    "Backend uses a mixin pattern (include MixinAuthorization / MixinStorage) to compose cross-cutting concerns into the main actor.",
-    "Role-based access control is implemented in Motoko (admin/user/guest) with first-time initialization using an environment-provided admin token and a user-provided secret.",
-    "Backend persistence relies on mo:core/Map-based in-memory stable structures (conceptually in-canister state) for posts/comments/follow graphs/marketplace/ownership/reviews/messages/progress tracking.",
-    "Marketplace + reviews + ownership are modeled explicitly (marketplace map, ownedBlueprints per user, reviews per blueprint).",
-    "HTTP outcalls are abstracted behind a dedicated module with transform function stripping headers and explicit cycle budgeting; Stripe integration is built on top of that.",
-    "Demo-mode architecture: demoData provides seed content; demoInteractions persists session-scoped likes/comments/purchases in sessionStorage; UI merges demo interaction counts into demo posts/blueprints.",
-    "Repository now includes a reusable build-template (Dockerfile, deploy scripts, ICP canister.yaml scaffolding, frontend tooling/config) intended to export/deploy the app in a standardized way.",
-    "User is considering adding searchable tags (potentially instead of, or in addition to, categories) to improve blueprint discoverability.",
-    "Decision: prioritize tags (searchable keywords) as the initial blueprint discovery mechanism over categories; start as minimal implementation (potentially frontend-only) and iterate toward full backend persistence later.",
-    "Decision update: do not implement categories for now; implement tags-only discovery (creator-entered tags during blueprint creation and search matching against tags)."
+    "Frontend is React + TypeScript using TanStack Router for routing and TanStack React Query for caching, mutations, optimistic updates, and invalidation.",
+    "Canister access is abstracted behind a `useActor` hook that creates anonymous vs authenticated actors based on Internet Identity and rebinds queries when identity/actor changes.",
+    "Backend is a single Motoko canister with mixin-style composition (authorization mixin + blob-storage mixin).",
+    "Role-based access control is centralized in `authorization/access-control.mo` and enforced across most shared/query methods via `hasPermission` checks.",
+    "Offline/degenerate operation is first-class: many queries fall back to demo seed data when the backend actor is missing or methods are unavailable.",
+    "Demo interactions for demo content are stored client-side in sessionStorage (likes/comments/purchases) to enable interactive demos without backend writes.",
+    "Offline blueprint publishing persists a serializable subset of marketplace blueprint metadata in localStorage (BigInt/Principal-safe) and broadcasts an event to refresh React Query views.",
+    "Media is represented as `ExternalBlob`; publish flows convert `File` uploads to bytes before sending to the canister in online mode.",
+    "Connection UX is implemented via a dedicated `useActorConnection` hook + `ConnectionStatus` banner showing retries/success/error states.",
+    "Calendar tasks are derived client-side by parsing JSON-encoded block content for `dailyStep` and `checklist` blocks and joining with localStorage completion state keyed by date."
   ],
   "known_issues": [
-    "Demo mode is effectively always enabled: isDemoModeEnabled() returns true, so many queries always serve demo content and never show real backend data even when connected.",
-    "Frontend expects backend method checkBlueprintOwnership (used by useCheckBlueprintOwnership) but it is not implemented in backend/main.mo, so real ownership checks will always be false.",
-    "Frontend expects backend method getProjectBlueprint (used by useGetProjectBlueprint) but backend only exposes getProjectBlueprints (list), not a single-item getter.",
-    "Step-based Studio publish flow collects description/price/isFree/image/bannerImage/theme, but useCreateStepBasedBlueprint only sends {id,title,steps,createdBy} to createProjectBlueprint; pricing/media/theme fields are not persisted and it does not create a MarketplaceBlueprint entry.",
-    "Backend purchaseBlueprint stores ownershipRecords keyed only by blueprintId, which will overwrite previous purchases by other users; ownership should be keyed per (owner, blueprintId) or use a unique record id.",
-    "Follow/unfollow backend logic does not update UserProfile.followers/following counts; ProfilePage also tracks following state locally (isFollowing) rather than deriving it from backend data, so follower/following numbers and follow state may be inconsistent.",
-    "Several UX flows are placeholders or mock-only: Notifications uses mock data; Chat/Groups pages show empty states; share post flow shows \"coming soon\"; profile/discover actions in Header are marked coming soon.",
-    "Potential type mismatch: frontend UserProfile.completedTasks is bigint[] while backend expects [Time.Time] (Time.Time is Int); serialization may not match intended meaning.",
-    "Stripe checkout session body builder uses a fixed index [0] for all allowedCountries entries, so only one country may be respected by Stripe; should enumerate indices.",
-    "Blob storage env var key appears misspelled as CAFFFEINE_STORAGE_CASHIER_PRINCIPAL (extra F), which can break storage integration if the intended env var is CAFFEINE_STORAGE_CASHIER_PRINCIPAL.",
-    "Access control initialization traps if CAFFEINE_ADMIN_TOKEN is not set; authenticated actor creation always calls _initializeAccessControlWithSecret, so missing env config can prevent app usage for signed-in users.",
-    "Duplicate/legacy styling config appears present (frontend/index.css vs frontend/src/index.css) which can cause confusion about the active design tokens (main.tsx imports src/index.css)."
+    "Backend `likePost` decrements a `Nat` (`post.likes - 1`) when unliking; if likes are 0 it can trap due to underflow.",
+    "Several write APIs trust client-provided fields (e.g., `createPost` accepts client-supplied `id`, `author`, `createdAt`), enabling spoofing/inconsistent data without server-side normalization.",
+    "Access control initialization traps if `CAFFEINE_ADMIN_TOKEN` is not set; authenticated actor initialization always calls `_initializeAccessControlWithSecret`, so misconfiguration can break authenticated usage.",
+    "Follow/unfollow UI state in `ProfilePage` is tracked locally and not derived from backend state; follower/following counters in stored profiles are not updated by follow/unfollow operations, so counts/state can drift.",
+    "Calendar page uses `useMemo` for a state-setting side effect (initializing enabled blueprints), which is an anti-pattern and may cause render-loop warnings; it should be `useEffect`.",
+    "Blueprint visibility preferences utilities (`taskCompletionStorage.ts`) exist but are not wired into `CalendarPage`, so enabled/disabled blueprint filters are not persisted across sessions.",
+    "Backend messaging APIs require `conversationParticipants` entries but there is no visible API to create/populate conversations, making messaging unusable without manual state seeding.",
+    "Local (offline) published blueprints cannot persist `image`/`bannerImage` because `ExternalBlob`/`File` cannot be stored in localStorage; local marketplace items therefore lose media until republished online.",
+    "Stripe checkout body builder uses `shipping_address_collection[allowed_countries][0]` for every configured country, so only one allowed country may be respected when multiple are provided.",
+    "Backend maintains a global `ownershipRecords` map keyed by `blueprintId`, so later purchases overwrite earlier ones in that global map (though per-user `ownedBlueprints` tracking is also maintained)."
   ],
-  "isFixRequest": false,
-  "generatedImages": [
-    {
-      "filename": "frontend/public/assets/generated/hero-general-blueprint.dim_800x400.png",
-      "description": "Generated hero/marketing image asset for the landing/branding UI.",
-      "targetWidth": 800,
-      "targetHeight": 400
-    }
-  ],
+  "isFixRequest": true,
   "gameProjectType": "none",
   "projectName": "Blueprint",
   "clarification_mode": "instant",

@@ -231,6 +231,11 @@ export const idlService = IDL.Service({
     ),
   'addReview' : IDL.Func([IDL.Text, Review], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'checkBlueprintOwnership' : IDL.Func(
+      [IDL.Principal, IDL.Text],
+      [IDL.Bool],
+      ['query'],
+    ),
   'createCheckoutSession' : IDL.Func(
       [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
       [IDL.Text],
@@ -245,6 +250,7 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getComments' : IDL.Func([PostId], [IDL.Vec(Comment)], ['query']),
+  'getCreatedBlueprints' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getDailyTasks' : IDL.Func(
       [],
       [IDL.Vec(IDL.Tuple(Time, DailyTask))],
@@ -524,6 +530,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'addReview' : IDL.Func([IDL.Text, Review], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'checkBlueprintOwnership' : IDL.Func(
+        [IDL.Principal, IDL.Text],
+        [IDL.Bool],
+        ['query'],
+      ),
     'createCheckoutSession' : IDL.Func(
         [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
         [IDL.Text],
@@ -538,6 +549,7 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getComments' : IDL.Func([PostId], [IDL.Vec(Comment)], ['query']),
+    'getCreatedBlueprints' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getDailyTasks' : IDL.Func(
         [],
         [IDL.Vec(IDL.Tuple(Time, DailyTask))],

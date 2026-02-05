@@ -189,6 +189,7 @@ export interface backendInterface {
     addReaction(postId: PostId, reactionType: Variant_sad_wow_angry_haha_like_love): Promise<void>;
     addReview(blueprintId: string, review: Review): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    checkBlueprintOwnership(user: Principal, blueprintId: string): Promise<boolean>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createMarketplaceBlueprint(blueprint: MarketplaceBlueprint): Promise<void>;
     createPost(post: Post): Promise<void>;
@@ -199,6 +200,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getComments(postId: PostId): Promise<Array<Comment>>;
+    getCreatedBlueprints(): Promise<Array<string>>;
     getDailyTasks(): Promise<Array<[Time, DailyTask]>>;
     getFollowers(user: Principal): Promise<bigint>;
     getMarketplaceBlueprint(blueprintId: string): Promise<MarketplaceBlueprint | null>;

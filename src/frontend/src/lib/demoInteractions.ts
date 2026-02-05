@@ -5,6 +5,16 @@ const DEMO_LIKES_KEY = 'blueprint_demo_likes';
 const DEMO_COMMENTS_KEY = 'blueprint_demo_comments';
 const DEMO_PURCHASES_KEY = 'blueprint_demo_purchases';
 
+// Known demo blueprint IDs from demo data
+const DEMO_BLUEPRINT_IDS = new Set([
+  'blueprint-language-001',
+  'blueprint-startup-001',
+  'blueprint-meal-prep-001',
+  'blueprint-coding-001',
+  'blueprint-marathon-001',
+  'blueprint-interview-001',
+]);
+
 export interface DemoLike {
   postId: string;
   userId: string;
@@ -30,8 +40,9 @@ export function isDemoPost(postId: string): boolean {
 }
 
 // Check if a blueprint is demo content
+// Only blueprints in the known demo set are considered demo blueprints
 export function isDemoBlueprint(blueprintId: string): boolean {
-  return blueprintId.startsWith('blueprint-');
+  return DEMO_BLUEPRINT_IDS.has(blueprintId);
 }
 
 // Demo Likes Management

@@ -1,6 +1,5 @@
 import Map "mo:core/Map";
 import Array "mo:core/Array";
-import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import Text "mo:core/Text";
 import Nat "mo:core/Nat";
@@ -13,9 +12,7 @@ import Stripe "stripe/stripe";
 import MixinAuthorization "authorization/MixinAuthorization";
 import OutCall "http-outcalls/outcall";
 import Runtime "mo:core/Runtime";
-import Migration "migration";
 
-(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -211,29 +208,45 @@ actor {
     timestamp : Time.Time;
   };
 
-  var reactions : Map.Map<Text, Reaction> = Map.empty<Text, Reaction>();
-  var projectBlueprints : Map.Map<Text, ProjectBlueprint> = Map.empty<Text, ProjectBlueprint>();
-  var posts : Map.Map<Text, Post> = Map.empty<Text, Post>();
-  var comments : Map.Map<Text, Map.Map<Text, Comment>> = Map.empty<Text, Map.Map<Text, Comment>>();
-  var messages : Map.Map<Text, Map.Map<Text, Message>> = Map.empty<Text, Map.Map<Text, Message>>();
-  var conversationParticipants : Map.Map<Text, (Principal, Principal)> = Map.empty<Text, (Principal, Principal)>();
-  var blueprints : Map.Map<Principal, Blueprint> = Map.empty<Principal, Blueprint>();
-  var dailyTasks : Map.Map<Principal, Map.Map<Time.Time, DailyTask>> = Map.empty<Principal, Map.Map<Time.Time, DailyTask>>();
-  var weightEntries : Map.Map<Principal, Map.Map<Time.Time, WeightEntry>> = Map.empty<Principal, Map.Map<Time.Time, WeightEntry>>();
-  var progress : Map.Map<Principal, Progress> = Map.empty<Principal, Progress>();
-  var followers : Map.Map<Principal, Map.Map<Principal, Bool>> = Map.empty<Principal, Map.Map<Principal, Bool>>();
-  var marketplace : Map.Map<Text, MarketplaceBlueprint> = Map.empty<Text, MarketplaceBlueprint>();
-  var blockchain : Map.Map<Text, BlockchainTransaction> = Map.empty<Text, BlockchainTransaction>();
-  var ownershipRecords : Map.Map<Text, OwnershipRecord> = Map.empty<Text, OwnershipRecord>();
-  var ownedBlueprints : Map.Map<Principal, Map.Map<Text, OwnershipRecord>> = Map.empty<Principal, Map.Map<Text, OwnershipRecord>>();
-  var reviews : Map.Map<Text, Map.Map<Text, Review>> = Map.empty<Text, Map.Map<Text, Review>>();
-  var customBlueprints : Map.Map<Principal, CustomBlueprint> = Map.empty<Principal, CustomBlueprint>();
-  var createdBlueprints : Map.Map<Principal, Map.Map<Text, Bool>> = Map.empty<Principal, Map.Map<Text, Bool>>();
+  let reactions = Map.empty<Text, Reaction>();
+  let projectBlueprints = Map.empty<Text, ProjectBlueprint>();
+  let posts = Map.empty<Text, Post>();
+  let comments = Map.empty<Text, Map.Map<Text, Comment>>();
+  let messages = Map.empty<Text, Map.Map<Text, Message>>();
+  let conversationParticipants = Map.empty<Text, (Principal, Principal)>();
+  let blueprints = Map.empty<Principal, Blueprint>();
+  let dailyTasks = Map.empty<Principal, Map.Map<Time.Time, DailyTask>>();
+  let weightEntries = Map.empty<Principal, Map.Map<Time.Time, WeightEntry>>();
+  let progress = Map.empty<Principal, Progress>();
+  let followers = Map.empty<Principal, Map.Map<Principal, Bool>>();
+  let marketplace = Map.empty<Text, MarketplaceBlueprint>();
+  let blockchain = Map.empty<Text, BlockchainTransaction>();
+  let ownershipRecords = Map.empty<Text, OwnershipRecord>();
+  let ownedBlueprints = Map.empty<Principal, Map.Map<Text, OwnershipRecord>>();
+  let reviews = Map.empty<Text, Map.Map<Text, Review>>();
+  let customBlueprints = Map.empty<Principal, CustomBlueprint>();
+  let createdBlueprints = Map.empty<Principal, Map.Map<Text, Bool>>();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
   let userProfiles = Map.empty<Principal, UserProfile>();
+
+  // Blueprint Ownership Check
+  public query ({ caller }) func checkBlueprintOwnership(user : Principal, blueprintId : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can check blueprint ownership");
+    };
+    if (caller != user) {
+      Runtime.trap("Unauthorized: Can only check your own blueprint ownership");
+    };
+    switch (ownedBlueprints.get(user)) {
+      case (null) { false };
+      case (?owned) {
+        owned.get(blueprintId) != null;
+      };
+    };
+  };
 
   // User Profile Management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -450,6 +463,16 @@ actor {
 
   public query func getMarketplaceBlueprint(blueprintId : Text) : async ?MarketplaceBlueprint {
     marketplace.get(blueprintId);
+  };
+
+  public query ({ caller }) func getCreatedBlueprints() : async [Text] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view their created blueprints");
+    };
+    switch (createdBlueprints.get(caller)) {
+      case (null) { [] };
+      case (?created) { created.keys().toArray() };
+    };
   };
 
   public shared ({ caller }) func createMarketplaceBlueprint(blueprint : MarketplaceBlueprint) : async () {
